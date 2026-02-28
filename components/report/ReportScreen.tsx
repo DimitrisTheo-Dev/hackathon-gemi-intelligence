@@ -14,6 +14,7 @@ import {
   Network,
   Newspaper,
   RotateCcw,
+  Search,
   ShieldCheck,
   SlidersHorizontal,
   Users,
@@ -545,7 +546,8 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
             </div>
 
             <div className="overview-actions">
-              <Link href="/" className="report-minimal-link">
+              <Link href="/" className="report-primary-link" aria-label="Start a new company search">
+                <Search size={14} />
                 New search
               </Link>
               <button
