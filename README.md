@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GEMI Intelligence
 
-## Getting Started
+Type any Greek company name and get a due diligence report in about 60 seconds.
 
-First, run the development server:
+## What It Includes
+
+- Playwright GEMI scraper (React/MUI SPA aware, accordion expansion included)
+- Server pipeline with live stage events over SSE
+- Risk scoring + AI narrative synthesis (OpenAI optional with deterministic fallback)
+- Supabase-backed caching with in-memory fallback
+- Premium dark UI flow: landing -> loading -> report -> share
+- PDF export endpoint
+
+## Stack
+
+- Next.js 16 App Router + TypeScript
+- Playwright
+- OpenAI SDK
+- Supabase JS client
+- Framer Motion + Lucide icons
+
+## Quick Start
+
+1. Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm exec playwright install chromium
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configure environment:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Supabase server writes require one backend key:
+- `SUPABASE_SECRET_KEY` (preferred) or `SUPABASE_SERVICE_ROLE_KEY` (legacy)
+- Never expose server keys with `NEXT_PUBLIC_`
 
-## Learn More
+3. (Optional but recommended) Apply SQL schema in Supabase SQL editor:
 
-To learn more about Next.js, take a look at the following resources:
+- [supabase/schema.sql](/Users/dimitristheodoropoulos/Dev/hackathon/supabase/schema.sql)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Run dev server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm dev
+```
 
-## Deploy on Vercel
+Open `http://localhost:3000`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Routes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `POST /api/search` -> starts pipeline, returns `search_id`
+- `GET /api/search/:id/stream` -> SSE stage updates
+- `GET /api/report/:id` -> report JSON
+- `GET /api/report/share/:token` -> report JSON by share token
+- `POST /api/report/:id/pdf` -> generated PDF
+
+## Notes
+
+- If live GEMI scraping fails (network/selector drift), the pipeline returns a transparent demo fallback dataset so the full UX still runs.
+- Add `GEMINI_API_KEY` (recommended for free tier) or `OPENAI_API_KEY` for AI synthesis; otherwise the app uses deterministic legal-risk heuristics.
+- Add `SERPAPI_KEY` for live news enrichment.
