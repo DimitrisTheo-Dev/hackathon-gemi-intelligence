@@ -21,43 +21,52 @@ export async function POST(request: Request): Promise<NextResponse> {
     return rateLimitExceededResponse(rateState, "search");
   }
 
-  const payload = (await request.json().catch(() => ({}))) as {
-    query?: string;
-    selected_gemi?: string;
-  };
-  const query = payload.query?.trim();
-  const selectedGemi = payload.selected_gemi?.replace(/\D+/g, "") || "";
+  try {
+    const payload = (await request.json().catch(() => ({}))) as {
+      query?: string;
+      selected_gemi?: string;
+    };
+    const query = payload.query?.trim();
+    const selectedGemi = payload.selected_gemi?.replace(/\D+/g, "") || "";
 
-  if (!query) {
-    const response = NextResponse.json({ error: "Query is required." }, { status: 400 });
+    if (!query) {
+      const response = NextResponse.json({ error: "Query is required." }, { status: 400 });
+      return applyRateLimitHeaders(response, rateState);
+    }
+
+    if (!selectedGemi) {
+      try {
+        const candidateLookup = await lookupGEMICandidates(query, 6);
+
+        if (candidateLookup.requires_selection && candidateLookup.candidates.length > 1) {
+          const response = NextResponse.json({
+            requires_selection: true,
+            candidates: candidateLookup.candidates,
+          });
+          return applyRateLimitHeaders(response, rateState);
+        }
+      } catch {
+        // Ignore candidate lookup errors and continue with best-effort pipeline run.
+      }
+    }
+
+    const search = await createSearch(query);
+    const pipelineQuery = selectedGemi || query;
+
+    after(async () => {
+      await runPipeline(search.id, pipelineQuery).catch((error) => {
+        console.error("Pipeline failed", error);
+      });
+    });
+
+    const response = NextResponse.json({ search_id: search.id });
+    return applyRateLimitHeaders(response, rateState);
+  } catch (error) {
+    console.error("[api/search] unhandled error:", error);
+    const response = NextResponse.json(
+      { error: "Unable to launch due diligence pipeline. Please retry." },
+      { status: 500 },
+    );
     return applyRateLimitHeaders(response, rateState);
   }
-
-  if (!selectedGemi) {
-    try {
-      const candidateLookup = await lookupGEMICandidates(query, 6);
-
-      if (candidateLookup.requires_selection && candidateLookup.candidates.length > 1) {
-        const response = NextResponse.json({
-          requires_selection: true,
-          candidates: candidateLookup.candidates,
-        });
-        return applyRateLimitHeaders(response, rateState);
-      }
-    } catch {
-      // Ignore candidate lookup errors and continue with best-effort pipeline run.
-    }
-  }
-
-  const search = await createSearch(query);
-  const pipelineQuery = selectedGemi || query;
-
-  after(async () => {
-    await runPipeline(search.id, pipelineQuery).catch((error) => {
-      console.error("Pipeline failed", error);
-    });
-  });
-
-  const response = NextResponse.json({ search_id: search.id });
-  return applyRateLimitHeaders(response, rateState);
 }

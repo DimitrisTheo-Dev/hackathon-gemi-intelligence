@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { EventEmitter } from "events";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import os from "os";
 import path from "path";
 
 import { getSupabaseServerClient } from "@/lib/supabase";
@@ -20,11 +21,14 @@ const latestSearchEvents = new Map<string, SearchEvent>();
 
 const bus = new EventEmitter();
 
-const RUNTIME_DIR = path.join(process.cwd(), ".runtime");
+const RUNTIME_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), "gemi-runtime")
+  : path.join(process.cwd(), ".runtime");
 const STORE_FILE = path.join(RUNTIME_DIR, "gemi-store.json");
 
 let supabaseDisabled = false;
 let diskLoaded = false;
+let diskDisabled = false;
 
 interface DiskState {
   searches: Record<string, SearchRecord>;
@@ -244,6 +248,10 @@ function sanitizeReportRecord(record: ReportRecord): ReportRecord {
 }
 
 function loadDiskStateUnsafe(): DiskState | null {
+  if (diskDisabled) {
+    return null;
+  }
+
   if (!existsSync(STORE_FILE)) {
     return null;
   }
@@ -263,6 +271,10 @@ function loadDiskStateUnsafe(): DiskState | null {
 }
 
 function persistDiskStateUnsafe(): void {
+  if (diskDisabled) {
+    return;
+  }
+
   const state: DiskState = {
     searches: Object.fromEntries(searches.entries()),
     reports: Object.fromEntries(reports.entries()),
@@ -271,11 +283,20 @@ function persistDiskStateUnsafe(): void {
     latestSearchEvents: Object.fromEntries(latestSearchEvents.entries()),
   };
 
-  mkdirSync(RUNTIME_DIR, { recursive: true });
-  writeFileSync(STORE_FILE, JSON.stringify(state), "utf8");
+  try {
+    mkdirSync(RUNTIME_DIR, { recursive: true });
+    writeFileSync(STORE_FILE, JSON.stringify(state), "utf8");
+  } catch (error) {
+    diskDisabled = true;
+    console.warn("[disk-store] disabled after write error:", error);
+  }
 }
 
 function syncFromDisk(): void {
+  if (diskDisabled) {
+    return;
+  }
+
   const disk = loadDiskStateUnsafe();
   if (!disk) {
     return;
