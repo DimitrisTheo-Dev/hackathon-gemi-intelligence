@@ -132,10 +132,10 @@ export default function SearchHero() {
       <section className="landing-content">
         <p className="eyebrow">GEMI Intelligence</p>
         <h1>
-          Type any Greek company name. Full due diligence in{" "}
+          Full due diligence in{" "}
           <span className="hero-time-highlight">60 seconds</span>.
         </h1>
-        <p className="subline">Authority-grade registry intelligence, synthesized for legal and financial teams.</p>
+        <p className="subline">Type any Greek company name.</p>
 
         <form className="search-form" onSubmit={onSubmit}>
           <div className="search-input-wrap">
