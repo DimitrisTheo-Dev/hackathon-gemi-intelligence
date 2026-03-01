@@ -1,6 +1,6 @@
 # GEMI Intelligence
 
-Type any Greek company name and get a due diligence report in about 5 minutes.
+Type any Greek company name and get a due diligence report in about 60 seconds.
 
 ## What It Includes
 

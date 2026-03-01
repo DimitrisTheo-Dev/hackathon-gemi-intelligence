@@ -1,12 +1,12 @@
 # GEMI Intelligence — Full Architecture Spec
-### "Type any Greek company name → Full Due Diligence in 5 minutes"
+### "Type any Greek company name → Full Due Diligence in 60 seconds"
 **Stack:** Next.js 14 · Supabase · OpenAI GPT-4o · Playwright · TypeScript
 
 ---
 
 ## The Product in One Sentence
 
-You type a company name. We hit GEMI (Greek public registry), extract everything public — structure, directors, shareholders, filings, capital history — run it through GPT-4o, and produce a structured due diligence report with a risk score. In under 5 minutes. For free. What currently costs €5,000 and 3 weeks.
+You type a company name. We hit GEMI (Greek public registry), extract everything public — structure, directors, shareholders, filings, capital history — run it through GPT-4o, and produce a structured due diligence report with a risk score. In under 60 seconds. For free. What currently costs €5,000 and 3 weeks.
 
 ---
 
@@ -637,7 +637,7 @@ SERPAPI_KEY=...   # optional, for news enrichment
 ## The 5-Second Pitch
 
 > "Due diligence on a Greek company costs €15,000 and takes 6 weeks.
-> We do it in 5 minutes. From public data. For free.
+> We do it in 60 seconds. From public data. For free.
 > Type any company name."
 
 Then you hand the laptop to a judge.

@@ -131,7 +131,7 @@ export default function SearchHero() {
 
       <section className="landing-content">
         <p className="eyebrow">GEMI Intelligence</p>
-        <h1>Type any Greek company name. Full due diligence in 5 minutes.</h1>
+        <h1>Type any Greek company name. Full due diligence in 60 seconds.</h1>
         <p className="subline">Authority-grade registry intelligence, synthesized for legal and financial teams.</p>
 
         <form className="search-form" onSubmit={onSubmit}>
