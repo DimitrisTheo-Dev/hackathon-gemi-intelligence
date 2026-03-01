@@ -4,6 +4,8 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { readJsonSafe } from "@/lib/http-client";
+
 const placeholders = ["COSMOTE", "MYTILINEOS", "ΒΙΟΧΑΛΚΟ"];
 
 interface SearchCandidate {
@@ -49,15 +51,15 @@ export default function SearchHero() {
       }),
     });
 
-    const payload = (await response.json()) as {
+    const payload = (await readJsonSafe<{
       search_id?: string;
       error?: string;
       requires_selection?: boolean;
       candidates?: SearchCandidate[];
-    };
+    }>(response)) || {};
 
     if (!response.ok) {
-      throw new Error(payload.error ?? "Unable to launch due diligence pipeline.");
+      throw new Error(payload.error || "Unable to launch due diligence pipeline. Please retry.");
     }
 
     if (payload.requires_selection && payload.candidates && payload.candidates.length > 0) {

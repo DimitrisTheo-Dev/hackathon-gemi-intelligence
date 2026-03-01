@@ -4,6 +4,7 @@ import { ArrowLeftRight, Download } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { readJsonSafe } from "@/lib/http-client";
 import type { ReportRecord } from "@/lib/types";
 
 interface ReportPayload {
@@ -24,14 +25,15 @@ function verdictFromScore(score: number): string {
 async function fetchBySlug(slug: string): Promise<ReportRecord> {
   const direct = await fetch(`/api/report/${slug}`, { cache: "no-store" });
   if (direct.ok) {
-    const payload = (await direct.json()) as ReportPayload;
+    const payload = (await readJsonSafe<ReportPayload>(direct)) || {};
     if (payload.report) {
       return payload.report;
     }
   }
 
   const shared = await fetch(`/api/report/share/${slug}`, { cache: "no-store" });
-  const sharedPayload = (await shared.json()) as ReportPayload & { error?: string };
+  const sharedPayload =
+    (await readJsonSafe<ReportPayload & { error?: string }>(shared)) || {};
   if (!shared.ok || !sharedPayload.report) {
     throw new Error(sharedPayload.error || "Unable to load comparison report.");
   }

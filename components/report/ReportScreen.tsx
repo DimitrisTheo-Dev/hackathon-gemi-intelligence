@@ -29,6 +29,7 @@ import AnalystVerdict from "@/components/report/AnalystVerdict";
 import RedFlagsCard from "@/components/report/RedFlagsCard";
 import RiskScoreExplainer from "@/components/report/RiskScoreExplainer";
 import { verdictFromScore as decisionFromScore, simulateRiskScore } from "@/lib/advisor";
+import { readJsonSafe } from "@/lib/http-client";
 import type { ReportDirector, ReportRecord, RiskEvidenceFlag, RiskScoreFactor } from "@/lib/types";
 
 const FILINGS_COLLAPSED_COUNT = 5;
@@ -192,7 +193,7 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       try {
         setLoading(true);
         const response = await fetch(endpoint, { cache: "no-store" });
-        const payload = (await response.json()) as ReportPayload & { error?: string };
+        const payload = (await readJsonSafe<ReportPayload & { error?: string }>(response)) || {};
 
         if (!response.ok || !payload.report) {
           throw new Error(payload.error ?? "Unable to load report.");
@@ -331,12 +332,12 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       body: JSON.stringify({ query }),
     });
 
-    const payload = (await initial.json()) as {
+    const payload = (await readJsonSafe<{
       search_id?: string;
       requires_selection?: boolean;
       candidates?: SearchCandidate[];
       error?: string;
-    };
+    }>(initial)) || {};
 
     if (!initial.ok) {
       throw new Error(payload.error || "Unable to launch comparison search.");
@@ -355,7 +356,8 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
           selected_gemi: payload.candidates[0].gemi_number,
         }),
       });
-      const retryPayload = (await retry.json()) as { search_id?: string; error?: string };
+      const retryPayload =
+        (await readJsonSafe<{ search_id?: string; error?: string }>(retry)) || {};
       if (!retry.ok || !retryPayload.search_id) {
         throw new Error(retryPayload.error || "Unable to launch comparison search.");
       }
