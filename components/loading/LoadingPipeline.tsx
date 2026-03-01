@@ -49,6 +49,7 @@ export default function LoadingPipeline({ searchId }: { searchId: string }) {
 
     eventSource.onmessage = (event) => {
       const payload = JSON.parse(event.data) as SearchEvent;
+      setError(null);
 
       setActiveStage(payload.stage);
       setMessage(payload.message);
@@ -90,8 +91,7 @@ export default function LoadingPipeline({ searchId }: { searchId: string }) {
     };
 
     eventSource.onerror = () => {
-      setError("Lost connection to pipeline stream.");
-      eventSource.close();
+      setError("Connection to pipeline interrupted. Reconnecting...");
     };
 
     return () => {
