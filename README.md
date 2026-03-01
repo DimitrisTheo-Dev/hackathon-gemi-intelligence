@@ -1,5 +1,7 @@
 # GEMI Intelligence
 
+<img width="1510" height="749" alt="Gemi-Intelligence" src="https://github.com/user-attachments/assets/3ceed720-1771-4d60-acc9-ab7a1b5defee" />
+
 Type any Greek company name and get a due diligence report in about 60 seconds.
 
 ## What It Includes
