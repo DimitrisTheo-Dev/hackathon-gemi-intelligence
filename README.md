@@ -55,8 +55,10 @@ Open `http://localhost:3000`.
 If PDF export fails with `Executable doesn't exist at ... chrome-headless-shell`, install browsers:
 
 ```bash
-pnpm exec playwright install chromium
+PLAYWRIGHT_BROWSERS_PATH=0 pnpm exec playwright install chromium
 ```
+
+For hosted deployments, ensure the same `PLAYWRIGHT_BROWSERS_PATH=0` env var is present at runtime.
 
 ## API Routes
 

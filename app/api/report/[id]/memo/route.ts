@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { chromium, type Browser } from "playwright";
+import type { Browser } from "playwright";
 
 import { getReport } from "@/lib/store";
 import type { GEMIReport } from "@/lib/types";
@@ -27,6 +27,9 @@ function isPlaywrightBrowserMissing(error: unknown): boolean {
 }
 
 async function launchChromiumForPdf(): Promise<Browser> {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || "0";
+  const { chromium } = await import("playwright");
+
   try {
     return await chromium.launch({ headless: true });
   } catch (error) {

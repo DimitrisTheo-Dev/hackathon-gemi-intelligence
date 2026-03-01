@@ -61,12 +61,12 @@ export async function runPipeline(searchId: string, query: string): Promise<void
       if (cached) {
         await updateSearch(searchId, {
           status: "complete",
-          current_stage: "Report ready (cache hit)",
+          current_stage: "Report ready",
           completed_at: new Date().toISOString(),
           report_id: cached.id,
         });
 
-        emit(searchId, "complete", "Report ready (cache hit)", cached.id);
+        emit(searchId, "complete", "Report ready", cached.id);
         return;
       }
     }
