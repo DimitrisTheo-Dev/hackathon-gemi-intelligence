@@ -2,7 +2,7 @@ import { normalizeFilingsWithGaps } from "@/lib/analysis";
 import { synthesizeReport } from "@/lib/ai/synthesize";
 import { fetchRecentNews } from "@/lib/enrichment/news";
 import { analyzeFinancialPdfSignals } from "@/lib/enrichment/financialPdf";
-import { scrapeGEMI } from "@/lib/scraper/gemi";
+import { GEMIRegistryNotFoundError, scrapeGEMI } from "@/lib/scraper/gemi";
 import { enrichDirectors } from "@/lib/scraper/directors";
 import {
   emitSearchEvent,
@@ -135,14 +135,18 @@ export async function runPipeline(searchId: string, query: string): Promise<void
     emit(searchId, "complete", "Report ready", saved.id);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const userFacingMessage =
+      error instanceof GEMIRegistryNotFoundError
+        ? "Company not found in GEMI registry. Please try a different company name, GEMI number, or VAT."
+        : message;
 
     await updateSearch(searchId, {
       status: "failed",
-      error: message,
+      error: userFacingMessage,
       current_stage: "Pipeline failed",
       completed_at: new Date().toISOString(),
     });
 
-    emit(searchId, "error", message);
+    emit(searchId, "error", userFacingMessage);
   }
 }

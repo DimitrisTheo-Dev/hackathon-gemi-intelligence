@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { readJsonSafe } from "@/lib/http-client";
 
-const placeholders = ["Skroutz", "Butler Chat", "Coca Cola"];
+const placeholders = ["Skroutz", "Butler Chat", "Fluoverse"];
 
 interface SearchCandidate {
   gemi_number: string;
@@ -131,7 +131,10 @@ export default function SearchHero() {
 
       <section className="landing-content">
         <p className="eyebrow">GEMI Intelligence</p>
-        <h1>Type any Greek company name. Full due diligence in 60 seconds.</h1>
+        <h1>
+          Type any Greek company name. Full due diligence in{" "}
+          <span className="hero-time-highlight">60 seconds</span>.
+        </h1>
         <p className="subline">Authority-grade registry intelligence, synthesized for legal and financial teams.</p>
 
         <form className="search-form" onSubmit={onSubmit}>
@@ -163,7 +166,7 @@ export default function SearchHero() {
               </span>
             </button>
           </div>
-          <p className="examples">Try: Skroutz • Butler Chat • Coca Cola</p>
+          <p className="examples">Try: Skroutz • Butler Chat • Fluoverse</p>
           {error ? <p className="error-text">{error}</p> : null}
 
           {candidates.length > 0 ? (

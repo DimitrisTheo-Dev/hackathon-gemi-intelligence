@@ -253,8 +253,8 @@ export default function CompareScreen({ slugA, slugB }: { slugA: string; slugB: 
           </table>
         </section>
 
-        <footer className="export-bar">
-          <button onClick={onExport} disabled={exporting}>
+        <footer className="export-bar compare-export-bar">
+          <button className="export-btn compare-export-btn" onClick={onExport} disabled={exporting}>
             <Download size={16} />
             {exporting ? "Generating comparison PDF..." : "Export Comparison PDF"}
           </button>

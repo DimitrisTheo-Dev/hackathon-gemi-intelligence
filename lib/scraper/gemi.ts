@@ -13,6 +13,17 @@ import { normalizeWhitespace } from "@/lib/utils";
 
 const BASE_URL = "https://publicity.businessportal.gr";
 
+export class GEMIRegistryNotFoundError extends Error {
+  readonly code = "GEMI_REGISTRY_NOT_FOUND";
+
+  constructor(query: string) {
+    super(
+      `Company not found in GEMI registry for "${query}". Please try another company name, GEMI number, or VAT.`,
+    );
+    this.name = "GEMIRegistryNotFoundError";
+  }
+}
+
 interface SearchHit {
   id?: string;
   gemiNumber?: string;
@@ -948,7 +959,7 @@ async function scrapeViaPublicityApi(query: string): Promise<GEMIRawData> {
   }
 
   if (candidateHits.length === 0) {
-    throw new Error(`No GEMI result found for query: ${query}`);
+    throw new GEMIRegistryNotFoundError(query);
   }
 
   let lastError = "";
@@ -993,6 +1004,10 @@ export async function scrapeGEMI(query: string): Promise<GEMIRawData> {
   try {
     return await scrapeViaPublicityApi(query);
   } catch (error) {
+    if (error instanceof GEMIRegistryNotFoundError) {
+      throw error;
+    }
+
     const message = error instanceof Error ? error.message : String(error);
     return fallbackRawData(query, message);
   }
