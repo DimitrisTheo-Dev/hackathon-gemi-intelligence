@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { readJsonSafe } from "@/lib/http-client";
 
-const placeholders = ["COSMOTE", "MYTILINEOS", "ΒΙΟΧΑΛΚΟ"];
+const placeholders = ["Skroutz", "Butler Chat", "Coca Cola"];
 
 interface SearchCandidate {
   gemi_number: string;
@@ -163,7 +163,7 @@ export default function SearchHero() {
               </span>
             </button>
           </div>
-          <p className="examples">Try: COSMOTE • MYTILINEOS • ΒΙΟΧΑΛΚΟ</p>
+          <p className="examples">Try: Skroutz • Butler Chat • Coca Cola</p>
           {error ? <p className="error-text">{error}</p> : null}
 
           {candidates.length > 0 ? (
