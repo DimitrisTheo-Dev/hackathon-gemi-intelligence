@@ -608,9 +608,21 @@ p {
   box-shadow: var(--shadow-1);
 }
 
+.report-header-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: stretch;
+}
+
+.report-header-row > * {
+  margin-bottom: 0 !important;
+}
+
 .analyst-verdict-banner {
   margin-bottom: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -656,15 +668,15 @@ p {
 .red-flags-card {
   margin-bottom: 12px;
   border-left: 3px solid rgba(255, 107, 107, 0.72);
-  padding: 14px;
+  padding: 10px 12px;
 }
 
 .red-flags-card header {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .red-flags-card h3 {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .red-flags-list {
@@ -721,11 +733,11 @@ p {
 
 .decision-bar {
   margin-bottom: 12px;
-  padding: 16px;
+  padding: 12px 14px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .decision-bar.low {
@@ -741,13 +753,14 @@ p {
 }
 
 .decision-copy h2 {
-  font-size: 28px;
+  font-size: 18px;
+  line-height: 1.2;
 }
 
 .decision-copy p {
-  margin-top: 6px;
+  margin-top: 4px;
   color: #bfd0ee;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .overview-head {

@@ -22,7 +22,10 @@ function iconForFlag(flag: RiskEvidenceFlag) {
 
 export default function RedFlagsCard({ flags }: RedFlagsCardProps) {
   const critical = flags
-    .filter((flag) => flag.severity === "critical" || (flag.score_impact || 0) > 0.6)
+    .filter((flag) => {
+      const impact = flag.score_impact ?? 0;
+      return impact >= 0 && (flag.severity === "critical" || impact > 0.6);
+    })
     .slice(0, 6);
 
   return (

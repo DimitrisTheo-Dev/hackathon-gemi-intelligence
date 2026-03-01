@@ -520,17 +520,18 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       <div className="report-grid" aria-hidden />
 
       <div className="report-wrap">
-        <AnalystVerdict
-          score={simulatedScore}
-          filingsCount={sourceQuality.filings_parsed}
-          financialCount={sourceQuality.financial_records}
-          evidenceCount={sourceQuality.evidence_points}
-          flags={evidenceFlags.filter((flag) => !resolvedFlagIds.includes(flag.id))}
-        />
+        <div className="report-header-row">
+          <AnalystVerdict
+            score={simulatedScore}
+            filingsCount={sourceQuality.filings_parsed}
+            financialCount={sourceQuality.financial_records}
+            evidenceCount={sourceQuality.evidence_points}
+            flags={evidenceFlags.filter((flag) => !resolvedFlagIds.includes(flag.id))}
+          />
 
-        <RedFlagsCard flags={evidenceFlags.filter((flag) => !resolvedFlagIds.includes(flag.id))} />
+          <RedFlagsCard flags={evidenceFlags.filter((flag) => !resolvedFlagIds.includes(flag.id))} />
 
-        <section className={`decision-bar ${simulatedTone}`}>
+          <section className={`decision-bar ${simulatedTone}`}>
           <div className="decision-copy">
             <p className="eyebrow">Analyst Decision</p>
             <h2>{simulatedDecision.replaceAll("_", " ")}</h2>
@@ -542,6 +543,7 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
           </div>
           <Gauge size={26} />
         </section>
+        </div>
 
         <motion.section
           className="overview-card"
