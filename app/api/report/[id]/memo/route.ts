@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { chromium, type Browser } from "playwright";
 
-import { createPdfErrorResponse, launchChromiumForPdf } from "@/lib/pdf-export";
 import { getReport } from "@/lib/store";
 import type { GEMIReport } from "@/lib/types";
 import { makeSlug } from "@/lib/utils";
@@ -8,10 +8,48 @@ import { makeSlug } from "@/lib/utils";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const PLAYWRIGHT_BROWSER_MISSING_MESSAGE =
+  "PDF export unavailable: Playwright Chromium browser is missing in this runtime. Run `pnpm exec playwright install chromium` during setup/deploy.";
+
 function riskColor(score: number): string {
   if (score <= 3) return "#2ad28d";
   if (score <= 6) return "#f6b66f";
   return "#ff6b6b";
+}
+
+function isPlaywrightBrowserMissing(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Executable doesn't exist at") ||
+    message.includes("download new browsers") ||
+    message.includes("playwright install")
+  );
+}
+
+async function launchChromiumForPdf(): Promise<Browser> {
+  try {
+    return await chromium.launch({ headless: true });
+  } catch (error) {
+    if (!isPlaywrightBrowserMissing(error)) {
+      throw error;
+    }
+    throw new Error(PLAYWRIGHT_BROWSER_MISSING_MESSAGE);
+  }
+}
+
+function createPdfErrorResponse(error: unknown): NextResponse {
+  const message = error instanceof Error && error.message ? error.message : "Failed to generate PDF.";
+  if (message === PLAYWRIGHT_BROWSER_MISSING_MESSAGE) {
+    return NextResponse.json(
+      {
+        code: "PLAYWRIGHT_BROWSER_MISSING",
+        error: message,
+      },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json({ error: message }, { status: 500 });
 }
 
 function escapeHtml(value: string): string {
