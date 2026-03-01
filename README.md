@@ -1,6 +1,6 @@
 # GEMI Intelligence
 
-Type any Greek company name and get a due diligence report in about 60 seconds.
+Type any Greek company name and get a due diligence report in about 5 minutes.
 
 ## What It Includes
 
@@ -49,6 +49,14 @@ pnpm dev
 ```
 
 Open `http://localhost:3000`.
+
+## Troubleshooting
+
+If PDF export fails with `Executable doesn't exist at ... chrome-headless-shell`, install browsers:
+
+```bash
+pnpm exec playwright install chromium
+```
 
 ## API Routes
 

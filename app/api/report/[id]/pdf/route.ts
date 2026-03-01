@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
 
+import { createPdfErrorResponse, launchChromiumForPdf } from "@/lib/pdf-export";
 import { getReport } from "@/lib/store";
 import { makeSlug } from "@/lib/utils";
 
@@ -69,9 +69,10 @@ export async function POST(
 </body>
 </html>`;
 
-  const browser = await chromium.launch({ headless: true });
+  let browser: Awaited<ReturnType<typeof launchChromiumForPdf>> | null = null;
 
   try {
+    browser = await launchChromiumForPdf();
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "domcontentloaded" });
 
@@ -89,7 +90,12 @@ export async function POST(
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
+  } catch (error) {
+    console.error("[api/report/[id]/pdf] Failed to generate PDF", error);
+    return createPdfErrorResponse(error);
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }

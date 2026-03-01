@@ -17,7 +17,7 @@ const gabarito = Gabarito({
 
 export const metadata: Metadata = {
   title: "GEMI Intelligence",
-  description: "Type any Greek company name and get a due diligence report in 60 seconds.",
+  description: "Type any Greek company name and get a due diligence report in 5 minutes.",
 };
 
 export const viewport: Viewport = {

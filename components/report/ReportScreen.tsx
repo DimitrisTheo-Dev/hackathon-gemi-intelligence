@@ -163,6 +163,15 @@ interface ReportPayload {
   report: ReportRecord;
 }
 
+interface ApiErrorPayload {
+  error?: string;
+}
+
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  const payload = await readJsonSafe<ApiErrorPayload>(response);
+  return payload?.error || fallback;
+}
+
 export default function ReportScreen({ mode, value }: { mode: "id" | "token"; value: string }) {
   const router = useRouter();
 
@@ -261,7 +270,7 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate PDF");
+        throw new Error(await readApiError(response, "Failed to generate PDF."));
       }
 
       const blob = await response.blob();
@@ -271,8 +280,8 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       anchor.download = `${record.company_name.replace(/\s+/g, "-").toLowerCase()}-due-diligence.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      setError("Failed to export PDF.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Failed to export PDF.");
     } finally {
       setExporting(false);
     }
@@ -308,7 +317,7 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate IC memo");
+        throw new Error(await readApiError(response, "Failed to generate IC memo."));
       }
 
       const blob = await response.blob();
@@ -318,8 +327,8 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       anchor.download = `${record.company_name.replace(/\s+/g, "-").toLowerCase()}-ic-memo.pdf`;
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      setError("Failed to export IC memo.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Failed to export IC memo.");
     } finally {
       setExportingMemo(false);
     }

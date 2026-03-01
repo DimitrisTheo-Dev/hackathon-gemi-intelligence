@@ -1,6 +1,6 @@
-import { chromium } from "playwright";
 import { NextResponse } from "next/server";
 
+import { createPdfErrorResponse, launchChromiumForPdf } from "@/lib/pdf-export";
 import { getReport } from "@/lib/store";
 import type { GEMIReport } from "@/lib/types";
 import { makeSlug } from "@/lib/utils";
@@ -278,9 +278,10 @@ export async function POST(
 
   const payload = (await request.json().catch(() => ({}))) as AdvisorSummaryPayload;
   const html = buildMemoHtml(record.report, payload);
-  const browser = await chromium.launch({ headless: true });
+  let browser: Awaited<ReturnType<typeof launchChromiumForPdf>> | null = null;
 
   try {
+    browser = await launchChromiumForPdf();
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "domcontentloaded" });
 
@@ -298,7 +299,12 @@ export async function POST(
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
+  } catch (error) {
+    console.error("[api/report/[id]/memo] Failed to generate PDF memo", error);
+    return createPdfErrorResponse(error);
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }

@@ -11,6 +11,15 @@ interface ReportPayload {
   report: ReportRecord;
 }
 
+interface ApiErrorPayload {
+  error?: string;
+}
+
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  const payload = await readJsonSafe<ApiErrorPayload>(response);
+  return payload?.error || fallback;
+}
+
 function parseYear(value: string): number | null {
   const match = value.match(/(19|20)\d{2}/);
   return match ? Number.parseInt(match[0], 10) : null;
@@ -157,7 +166,7 @@ export default function CompareScreen({ slugA, slugB }: { slugA: string; slugB: 
       });
 
       if (!response.ok) {
-        throw new Error("Export failed");
+        throw new Error(await readApiError(response, "Failed to export comparison PDF."));
       }
 
       const blob = await response.blob();
@@ -167,8 +176,8 @@ export default function CompareScreen({ slugA, slugB }: { slugA: string; slugB: 
       anchor.download = "gemi-comparison.pdf";
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      setError("Failed to export comparison PDF.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Failed to export comparison PDF.");
     } finally {
       setExporting(false);
     }
