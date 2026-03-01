@@ -1571,21 +1571,34 @@ p {
   margin-top: 16px;
   border: 1px solid var(--stroke);
   border-radius: var(--radius-md);
+  overflow: hidden;
   background: linear-gradient(170deg, rgba(21, 30, 47, 0.92), rgba(14, 21, 34, 0.96));
   box-shadow: var(--shadow-1);
   padding: 18px;
 }
 
 .advisor-card.low {
-  border-image: linear-gradient(90deg, rgba(82, 185, 139, 0.72), rgba(122, 209, 178, 0.4)) 1;
+  border-color: rgba(82, 185, 139, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(170, 241, 213, 0.12),
+    0 0 0 1px rgba(82, 185, 139, 0.2),
+    var(--shadow-1);
 }
 
 .advisor-card.medium {
-  border-image: linear-gradient(90deg, rgba(243, 177, 103, 0.75), rgba(255, 153, 92, 0.45)) 1;
+  border-color: rgba(243, 177, 103, 0.66);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 223, 177, 0.14),
+    0 0 0 1px rgba(243, 177, 103, 0.22),
+    var(--shadow-1);
 }
 
 .advisor-card.high {
-  border-image: linear-gradient(90deg, rgba(255, 153, 92, 0.62), rgba(255, 107, 107, 0.76)) 1;
+  border-color: rgba(255, 107, 107, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 196, 196, 0.12),
+    0 0 0 1px rgba(255, 107, 107, 0.24),
+    var(--shadow-1);
 }
 
 .advisor-header {
