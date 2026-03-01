@@ -473,30 +473,39 @@ async function synthesizeWithGemini(raw: GEMIRawData): Promise<unknown | null> {
     env.geminiModel,
   )}:generateContent`;
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-goog-api-key": env.geminiApiKey,
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `${AI_SYSTEM_PROMPT}\n\nAnalyze this GEMI payload and refine legal risk commentary:\n${JSON.stringify(raw)}`,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.2,
-        responseMimeType: "application/json",
+  const geminiController = new AbortController();
+  const geminiTimer = setTimeout(() => geminiController.abort(), 20000);
+
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-goog-api-key": env.geminiApiKey,
       },
-    }),
-    cache: "no-store",
-  });
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `${AI_SYSTEM_PROMPT}\n\nAnalyze this GEMI payload and refine legal risk commentary:\n${JSON.stringify(raw)}`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          responseMimeType: "application/json",
+        },
+      }),
+      cache: "no-store",
+      signal: geminiController.signal,
+    });
+  } finally {
+    clearTimeout(geminiTimer);
+  }
 
   const payload = (await response.json().catch(() => ({}))) as {
     candidates?: Array<{

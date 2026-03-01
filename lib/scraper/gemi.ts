@@ -239,20 +239,38 @@ function fallbackRawData(query: string, reason: string): GEMIRawData {
 }
 
 async function postPublicityApi<T>(path: string, body: unknown): Promise<T> {
-  const maxAttempts = 6;
+  const maxAttempts = 3;
+  const REQUEST_TIMEOUT_MS = 12000;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json, text/plain, */*",
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-    const text = await response.text();
+    let response: Response;
+    let text: string;
+    try {
+      response = await fetch(`${BASE_URL}${path}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json, text/plain, */*",
+        },
+        body: JSON.stringify(body),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      text = await response.text();
+    } catch (err) {
+      clearTimeout(timer);
+      if (attempt < maxAttempts) {
+        const waitMs = Math.min(3000, 500 * attempt) + Math.floor(Math.random() * 100);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        continue;
+      }
+      throw new Error(`Publicity API ${path} failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      clearTimeout(timer);
+    }
 
     if (response.ok) {
       try {
@@ -268,7 +286,7 @@ async function postPublicityApi<T>(path: string, body: unknown): Promise<T> {
       /too many requests/i.test(text);
 
     if (retryable && attempt < maxAttempts) {
-      const waitMs = Math.min(8000, 400 * attempt * attempt) + Math.floor(Math.random() * 120);
+      const waitMs = Math.min(3000, 500 * attempt) + Math.floor(Math.random() * 100);
       await new Promise((resolve) => setTimeout(resolve, waitMs));
       continue;
     }

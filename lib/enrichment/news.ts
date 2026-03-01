@@ -16,12 +16,16 @@ export async function fetchRecentNews(companyName: string): Promise<ReportNews[]
     api_key: env.serpApiKey,
   });
 
+  const newsController = new AbortController();
+  const newsTimer = setTimeout(() => newsController.abort(), 8000);
+
   try {
     const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`, {
       headers: {
         "Content-Type": "application/json",
       },
       cache: "no-store",
+      signal: newsController.signal,
     });
 
     if (!response.ok) {
@@ -53,5 +57,7 @@ export async function fetchRecentNews(companyName: string): Promise<ReportNews[]
     return news;
   } catch {
     return [];
+  } finally {
+    clearTimeout(newsTimer);
   }
 }
