@@ -1,5 +1,3 @@
-import { PDFParse } from "pdf-parse";
-
 import type { FinancialPdfSignal, RawFinancial } from "@/lib/types";
 import { normalizeWhitespace } from "@/lib/utils";
 
@@ -28,6 +26,22 @@ function extractSnippet(text: string, pattern: RegExp): string | undefined {
 export async function analyzeFinancialPdfSignals(
   financials: RawFinancial[],
 ): Promise<FinancialPdfSignal[]> {
+  // Dynamically import pdf-parse to avoid pdfjs-dist evaluating DOMMatrix at
+  // module load time, which crashes the route on Node.js serverless runtimes.
+  type PDFParseConstructor = new (opts: { data: Buffer }) => {
+    getText: (opts: { first: number }) => Promise<{ text: string }>;
+    destroy: () => Promise<void>;
+  };
+  let PDFParseClass: PDFParseConstructor | null = null;
+  try {
+    PDFParseClass = (await import("pdf-parse")).PDFParse as unknown as PDFParseConstructor;
+  } catch {
+    // pdf-parse / pdfjs-dist not available in this runtime (e.g. Vercel serverless).
+    return [];
+  }
+
+  if (!PDFParseClass) return [];
+
   const targets = financials
     .filter((entry) => Boolean(entry.download_url) && Boolean(entry.filename))
     .slice(0, MAX_FILES_TO_SCAN);
@@ -63,9 +77,9 @@ export async function analyzeFinancialPdfSignals(
         continue;
       }
 
-      const parser = new PDFParse({ data: bytes });
-      const parsed = await parser.getText({ first: 8 }).finally(async () => {
-        await parser.destroy().catch(() => undefined);
+      const parser = new PDFParseClass({ data: bytes });
+      const parsed = await parser.getText({ first: 8 }).finally(() => {
+        parser.destroy().catch(() => undefined);
       });
 
       const rawText = normalizeWhitespace(parsed.text || "");
