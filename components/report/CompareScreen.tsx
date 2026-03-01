@@ -25,17 +25,16 @@ function verdictFromScore(score: number): string {
 async function fetchBySlug(slug: string): Promise<ReportRecord> {
   const direct = await fetch(`/api/report/${slug}`, { cache: "no-store" });
   if (direct.ok) {
-    const payload = (await readJsonSafe<ReportPayload>(direct)) || {};
-    if (payload.report) {
+    const payload = await readJsonSafe<ReportPayload>(direct);
+    if (payload?.report) {
       return payload.report;
     }
   }
 
   const shared = await fetch(`/api/report/share/${slug}`, { cache: "no-store" });
-  const sharedPayload =
-    (await readJsonSafe<ReportPayload & { error?: string }>(shared)) || {};
-  if (!shared.ok || !sharedPayload.report) {
-    throw new Error(sharedPayload.error || "Unable to load comparison report.");
+  const sharedPayload = await readJsonSafe<ReportPayload & { error?: string }>(shared);
+  if (!shared.ok || !sharedPayload?.report) {
+    throw new Error(sharedPayload?.error || "Unable to load comparison report.");
   }
 
   return sharedPayload.report;

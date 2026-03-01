@@ -193,10 +193,10 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       try {
         setLoading(true);
         const response = await fetch(endpoint, { cache: "no-store" });
-        const payload = (await readJsonSafe<ReportPayload & { error?: string }>(response)) || {};
+        const payload = await readJsonSafe<ReportPayload & { error?: string }>(response);
 
-        if (!response.ok || !payload.report) {
-          throw new Error(payload.error ?? "Unable to load report.");
+        if (!response.ok || !payload?.report) {
+          throw new Error(payload?.error ?? "Unable to load report.");
         }
 
         setRecord(payload.report);
@@ -332,22 +332,22 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
       body: JSON.stringify({ query }),
     });
 
-    const payload = (await readJsonSafe<{
+    const payload = await readJsonSafe<{
       search_id?: string;
       requires_selection?: boolean;
       candidates?: SearchCandidate[];
       error?: string;
-    }>(initial)) || {};
+    }>(initial);
 
     if (!initial.ok) {
-      throw new Error(payload.error || "Unable to launch comparison search.");
+      throw new Error(payload?.error || "Unable to launch comparison search.");
     }
 
-    if (payload.search_id) {
+    if (payload?.search_id) {
       return payload.search_id;
     }
 
-    if (payload.requires_selection && payload.candidates && payload.candidates.length > 0) {
+    if (payload?.requires_selection && payload.candidates && payload.candidates.length > 0) {
       const retry = await fetch("/api/search", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -356,10 +356,9 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
           selected_gemi: payload.candidates[0].gemi_number,
         }),
       });
-      const retryPayload =
-        (await readJsonSafe<{ search_id?: string; error?: string }>(retry)) || {};
-      if (!retry.ok || !retryPayload.search_id) {
-        throw new Error(retryPayload.error || "Unable to launch comparison search.");
+      const retryPayload = await readJsonSafe<{ search_id?: string; error?: string }>(retry);
+      if (!retry.ok || !retryPayload?.search_id) {
+        throw new Error(retryPayload?.error || "Unable to launch comparison search.");
       }
       return retryPayload.search_id;
     }

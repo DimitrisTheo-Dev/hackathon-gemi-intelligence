@@ -51,25 +51,25 @@ export default function SearchHero() {
       }),
     });
 
-    const payload = (await readJsonSafe<{
+    const payload = await readJsonSafe<{
       search_id?: string;
       error?: string;
       requires_selection?: boolean;
       candidates?: SearchCandidate[];
-    }>(response)) || {};
+    }>(response);
 
     if (!response.ok) {
-      throw new Error(payload.error || "Unable to launch due diligence pipeline. Please retry.");
+      throw new Error(payload?.error || "Unable to launch due diligence pipeline. Please retry.");
     }
 
-    if (payload.requires_selection && payload.candidates && payload.candidates.length > 0) {
+    if (payload?.requires_selection && payload.candidates && payload.candidates.length > 0) {
       setCandidates(payload.candidates);
       setSelectedGemi(payload.candidates[0].gemi_number);
       setShowCandidateList(false);
       return;
     }
 
-    if (!payload.search_id) {
+    if (!payload?.search_id) {
       throw new Error("Unable to launch due diligence pipeline.");
     }
 
