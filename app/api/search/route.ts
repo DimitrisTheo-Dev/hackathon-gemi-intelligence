@@ -53,11 +53,18 @@ export async function POST(request: Request): Promise<NextResponse> {
     const search = await createSearch(query);
     const pipelineQuery = selectedGemi || query;
 
-    after(async () => {
-      await runPipeline(search.id, pipelineQuery).catch((error) => {
-        console.error("Pipeline failed", error);
+    try {
+      after(async () => {
+        await runPipeline(search.id, pipelineQuery).catch((error) => {
+          console.error("Pipeline failed", error);
+        });
       });
-    });
+    } catch (afterError) {
+      console.error("[api/search] after() not supported, running pipeline inline:", afterError);
+      runPipeline(search.id, pipelineQuery).catch((error) => {
+        console.error("Pipeline failed (inline):", error);
+      });
+    }
 
     const response = NextResponse.json({ search_id: search.id });
     return applyRateLimitHeaders(response, rateState);
