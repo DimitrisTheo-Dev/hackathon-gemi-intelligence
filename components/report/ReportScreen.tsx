@@ -536,8 +536,8 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
             <h2>{simulatedDecision.replaceAll("_", " ")}</h2>
             <p>
               Current score {simulatedScore}/10. If top 2 open issues are resolved, projected decision shifts to{" "}
-              <strong>{projectedDecision.replaceAll("_", " ")}</strong> (from {simulatedScore} to{" "}
-              {projectedScore}).
+                from {simulatedScore} to{" "}
+                {projectedScore} <strong>({projectedDecision.replaceAll("_", " ")})</strong>
             </p>
           </div>
           <Gauge size={26} />
