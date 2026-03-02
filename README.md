@@ -110,8 +110,8 @@ Open `http://localhost:3000`.
 - Supabase server writes require one backend key:
   - `SUPABASE_SECRET_KEY` (preferred) or `SUPABASE_SERVICE_ROLE_KEY` (legacy)
   - Never expose server keys with `NEXT_PUBLIC_`
-- Add `GEMINI_API_KEY` (recommended for free tier) or `OPENAI_API_KEY` for AI synthesis.
-- Add `SERPAPI_KEY` for live news enrichment.
+- LLM and news keys are BYOK: users add Gemini/OpenAI/SerpAPI keys in the UI (`Configure keys` on the search page). These keys are not read from server env variables.
+- `OPENAI_MODEL` and `GEMINI_MODEL` remain optional server-side model overrides.
 
 ## Troubleshooting
 

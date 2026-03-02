@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 
+import { hasUserAiKey, type UserApiKeys } from "@/lib/api-keys";
 import { hasAuditorSwitch, latestBoardChanges, normalizeFilingsWithGaps } from "@/lib/analysis";
 import { env } from "@/lib/env";
 import type {
@@ -433,12 +434,15 @@ function mergeAIOutput(base: GEMIReport, ai: unknown): GEMIReport {
   };
 }
 
-async function synthesizeWithOpenAI(raw: GEMIRawData): Promise<unknown | null> {
-  if (!env.openAiApiKey) {
+async function synthesizeWithOpenAI(
+  raw: GEMIRawData,
+  openaiApiKey?: string,
+): Promise<unknown | null> {
+  if (!openaiApiKey) {
     return null;
   }
 
-  const client = new OpenAI({ apiKey: env.openAiApiKey, timeout: 20000 });
+  const client = new OpenAI({ apiKey: openaiApiKey, timeout: 20000 });
 
   const completion = await client.chat.completions.create({
     model: env.openAiModel,
@@ -464,8 +468,11 @@ async function synthesizeWithOpenAI(raw: GEMIRawData): Promise<unknown | null> {
   return JSON.parse(content) as unknown;
 }
 
-async function synthesizeWithGemini(raw: GEMIRawData): Promise<unknown | null> {
-  if (!env.geminiApiKey) {
+async function synthesizeWithGemini(
+  raw: GEMIRawData,
+  geminiApiKey?: string,
+): Promise<unknown | null> {
+  if (!geminiApiKey) {
     return null;
   }
 
@@ -482,7 +489,7 @@ async function synthesizeWithGemini(raw: GEMIRawData): Promise<unknown | null> {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-goog-api-key": env.geminiApiKey,
+        "x-goog-api-key": geminiApiKey,
       },
       body: JSON.stringify({
         contents: [
@@ -528,13 +535,20 @@ async function synthesizeWithGemini(raw: GEMIRawData): Promise<unknown | null> {
   return JSON.parse(text) as unknown;
 }
 
-export async function synthesizeReport(raw: GEMIRawData): Promise<GEMIReport> {
+export async function synthesizeReport(
+  raw: GEMIRawData,
+  apiKeys: UserApiKeys = {},
+): Promise<GEMIReport> {
   const heuristic = buildHeuristicReport(raw);
 
+  if (!hasUserAiKey(apiKeys)) {
+    return heuristic;
+  }
+
   try {
-    const primary = env.geminiApiKey
-      ? await synthesizeWithGemini(raw)
-      : await synthesizeWithOpenAI(raw);
+    const primary = apiKeys.geminiApiKey
+      ? await synthesizeWithGemini(raw, apiKeys.geminiApiKey)
+      : await synthesizeWithOpenAI(raw, apiKeys.openaiApiKey);
 
     if (primary) {
       return mergeAIOutput(heuristic, primary);
@@ -544,9 +558,9 @@ export async function synthesizeReport(raw: GEMIRawData): Promise<GEMIReport> {
   }
 
   try {
-    const secondary = env.geminiApiKey
-      ? await synthesizeWithOpenAI(raw)
-      : await synthesizeWithGemini(raw);
+    const secondary = apiKeys.geminiApiKey
+      ? await synthesizeWithOpenAI(raw, apiKeys.openaiApiKey)
+      : await synthesizeWithGemini(raw, apiKeys.geminiApiKey);
 
     if (secondary) {
       return mergeAIOutput(heuristic, secondary);

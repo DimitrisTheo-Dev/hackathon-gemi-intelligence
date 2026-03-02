@@ -1,9 +1,11 @@
-import { env } from "@/lib/env";
 import type { ReportNews } from "@/lib/types";
 import { sleep } from "@/lib/utils";
 
-export async function fetchRecentNews(companyName: string): Promise<ReportNews[]> {
-  if (!env.serpApiKey) {
+export async function fetchRecentNews(
+  companyName: string,
+  serpApiKey?: string,
+): Promise<ReportNews[]> {
+  if (!serpApiKey) {
     await sleep(180);
     return [];
   }
@@ -13,7 +15,7 @@ export async function fetchRecentNews(companyName: string): Promise<ReportNews[]
     q: `${companyName} site:gr`,
     gl: "gr",
     hl: "el",
-    api_key: env.serpApiKey,
+    api_key: serpApiKey,
   });
 
   const newsController = new AbortController();

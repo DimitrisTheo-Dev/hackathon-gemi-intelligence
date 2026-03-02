@@ -4,6 +4,13 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import {
+  clearUserApiKeysFromStorage,
+  normalizeUserApiKeys,
+  readUserApiKeysFromStorage,
+  saveUserApiKeysToStorage,
+  type UserApiKeys,
+} from "@/lib/api-keys";
 import { readJsonSafe } from "@/lib/http-client";
 
 const placeholders = ["Skroutz", "Butler Chat", "Fluoverse"];
@@ -27,6 +34,9 @@ export default function SearchHero() {
   const [candidates, setCandidates] = useState<SearchCandidate[]>([]);
   const [selectedGemi, setSelectedGemi] = useState<string>("");
   const [showCandidateList, setShowCandidateList] = useState(false);
+  const [showApiKeys, setShowApiKeys] = useState(false);
+  const [apiKeys, setApiKeys] = useState<UserApiKeys>({});
+  const [apiKeySaveState, setApiKeySaveState] = useState<"idle" | "saved">("idle");
 
   const activePlaceholder = useMemo(
     () => placeholders[placeholderIndex % placeholders.length],
@@ -41,6 +51,10 @@ export default function SearchHero() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    setApiKeys(readUserApiKeysFromStorage());
+  }, []);
+
   async function launchSearch(overrideGemi?: string): Promise<void> {
     const response = await fetch("/api/search", {
       method: "POST",
@@ -48,6 +62,7 @@ export default function SearchHero() {
       body: JSON.stringify({
         query: query.trim(),
         selected_gemi: overrideGemi || undefined,
+        api_keys: normalizeUserApiKeys(apiKeys),
       }),
     });
 
@@ -123,6 +138,27 @@ export default function SearchHero() {
     candidates.find((candidate) => candidate.gemi_number === selectedGemi) || topCandidate || null;
   const isTopMatchSelected =
     Boolean(selectedGemi) && Boolean(topCandidate) && selectedGemi === topCandidate?.gemi_number;
+  const hasAnyApiKey = Boolean(apiKeys.geminiApiKey || apiKeys.openaiApiKey || apiKeys.serpApiKey);
+
+  function updateApiKey(field: keyof UserApiKeys, value: string): void {
+    setApiKeySaveState("idle");
+    setApiKeys((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function onSaveApiKeys(): void {
+    const normalized = saveUserApiKeysToStorage(apiKeys);
+    setApiKeys(normalized);
+    setApiKeySaveState("saved");
+  }
+
+  function onClearApiKeys(): void {
+    clearUserApiKeysFromStorage();
+    setApiKeys({});
+    setApiKeySaveState("idle");
+  }
 
   return (
     <main className="landing-shell">
@@ -167,6 +203,69 @@ export default function SearchHero() {
             </button>
           </div>
           <p className="examples">Try: Skroutz • Butler Chat • Fluoverse</p>
+          <section className="api-keys-wrap">
+            <div className="api-keys-head">
+              <p className="api-keys-title">
+                Bring your own keys for AI + news enrichment ({hasAnyApiKey ? "configured" : "not configured"}).
+              </p>
+              <button
+                type="button"
+                className="candidate-link-btn"
+                onClick={() => setShowApiKeys((current) => !current)}
+              >
+                {showApiKeys ? "Hide key settings" : "Configure keys"}
+              </button>
+            </div>
+
+            {showApiKeys ? (
+              <div className="api-keys-panel">
+                <label className="api-keys-field">
+                  <span>Gemini API key (optional)</span>
+                  <input
+                    type="password"
+                    value={apiKeys.geminiApiKey ?? ""}
+                    onChange={(event) => updateApiKey("geminiApiKey", event.target.value)}
+                    placeholder="AIza..."
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+
+                <label className="api-keys-field">
+                  <span>OpenAI API key (optional)</span>
+                  <input
+                    type="password"
+                    value={apiKeys.openaiApiKey ?? ""}
+                    onChange={(event) => updateApiKey("openaiApiKey", event.target.value)}
+                    placeholder="sk-..."
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+
+                <label className="api-keys-field">
+                  <span>SerpAPI key for live news (optional)</span>
+                  <input
+                    type="password"
+                    value={apiKeys.serpApiKey ?? ""}
+                    onChange={(event) => updateApiKey("serpApiKey", event.target.value)}
+                    placeholder="..."
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+
+                <div className="api-keys-actions">
+                  <button type="button" className="inline-action" onClick={onSaveApiKeys}>
+                    {apiKeySaveState === "saved" ? "Saved" : "Save keys locally"}
+                  </button>
+                  <button type="button" className="inline-action" onClick={onClearApiKeys}>
+                    Clear keys
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </section>
           {error ? <p className="error-text">{error}</p> : null}
 
           {candidates.length > 0 ? (

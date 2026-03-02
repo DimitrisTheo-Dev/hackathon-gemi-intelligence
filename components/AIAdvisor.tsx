@@ -3,6 +3,7 @@
 import { CheckCircle2, Copy, Info, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { normalizeUserApiKeys, readUserApiKeysFromStorage } from "@/lib/api-keys";
 import type { GEMIReport } from "@/lib/types";
 
 interface AdvisorResponseMetadata {
@@ -174,6 +175,7 @@ export default function AIAdvisor({
             companySlug,
             reportData,
             resolved_flag_ids: resolvedFlagIds,
+            api_keys: normalizeUserApiKeys(readUserApiKeysFromStorage()),
           }),
         });
 

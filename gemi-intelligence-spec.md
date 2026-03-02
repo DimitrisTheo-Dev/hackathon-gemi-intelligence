@@ -523,7 +523,7 @@ src/
 
 ## UI Design Principles
 
-**Landing page:** Dead simple. Black background. One large input. Examples below it ("Try: COSMOTE, ΒΙΟΧΑΛΚΟ, MYTILINEOS"). Nothing else. No nav, no footer, no fluff.
+**Landing page:** Dead simple. Black background. One large input. Examples below it ("Try: Skroutz, Butler Chat, Fluoverse"). Nothing else. No nav, no footer, no fluff.
 
 **Loading page:** Full screen. Company name at top. Animated checklist of stages. Each stage ticks green as it completes. Show elapsed time. Progress bar at bottom. This screen IS the demo — it communicates exactly what's happening.
 

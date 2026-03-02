@@ -1,3 +1,4 @@
+import { hasUserAiKey, hasUserNewsKey, type UserApiKeys } from "@/lib/api-keys";
 import { normalizeFilingsWithGaps } from "@/lib/analysis";
 import { synthesizeReport } from "@/lib/ai/synthesize";
 import { fetchRecentNews } from "@/lib/enrichment/news";
@@ -34,7 +35,11 @@ function emit(searchId: string, stage: PipelineStage, message: string, reportId?
   });
 }
 
-export async function runPipeline(searchId: string, query: string): Promise<void> {
+export async function runPipeline(
+  searchId: string,
+  query: string,
+  apiKeys: UserApiKeys,
+): Promise<void> {
   try {
     emit(searchId, "searching_gemi", "Searching GEMI registry...");
     await updateSearch(searchId, {
@@ -51,10 +56,12 @@ export async function runPipeline(searchId: string, query: string): Promise<void
       current_stage: "Extracting company structure...",
     });
 
+    const shouldBypassCache = hasUserAiKey(apiKeys) || hasUserNewsKey(apiKeys);
     const canUseCache =
       raw.source === "live" &&
       Boolean(raw.company.gemi_number) &&
-      raw.company.gemi_number !== "000000000000";
+      raw.company.gemi_number !== "000000000000" &&
+      !shouldBypassCache;
 
     if (canUseCache) {
       const cached = await findCachedReportByGemi(raw.company.gemi_number);
@@ -114,7 +121,7 @@ export async function runPipeline(searchId: string, query: string): Promise<void
       status: "scraping",
       current_stage: "Scanning recent news...",
     });
-    raw.news = await fetchRecentNews(raw.company.name);
+    raw.news = await fetchRecentNews(raw.company.name, apiKeys.serpApiKey);
 
     emit(searchId, "ai_analysis", "AI building risk assessment...");
     await updateSearch(searchId, {
@@ -122,7 +129,7 @@ export async function runPipeline(searchId: string, query: string): Promise<void
       current_stage: "AI building risk assessment...",
     });
 
-    const report = await synthesizeReport(raw);
+    const report = await synthesizeReport(raw, apiKeys);
     const saved = await saveReport(searchId, report);
 
     await updateSearch(searchId, {

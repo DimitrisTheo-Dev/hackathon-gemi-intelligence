@@ -28,6 +28,11 @@ import AIAdvisor from "@/components/AIAdvisor";
 import AnalystVerdict from "@/components/report/AnalystVerdict";
 import RedFlagsCard from "@/components/report/RedFlagsCard";
 import RiskScoreExplainer from "@/components/report/RiskScoreExplainer";
+import {
+  normalizeUserApiKeys,
+  readUserApiKeysFromStorage,
+  type UserApiKeys,
+} from "@/lib/api-keys";
 import { verdictFromScore as decisionFromScore, simulateRiskScore } from "@/lib/advisor";
 import { readJsonSafe } from "@/lib/http-client";
 import type { ReportDirector, ReportRecord, RiskEvidenceFlag, RiskScoreFactor } from "@/lib/types";
@@ -194,6 +199,11 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
   const [showAllDirectors, setShowAllDirectors] = useState(false);
   const [showAllFinancials, setShowAllFinancials] = useState(false);
   const [showAllRiskEvidence, setShowAllRiskEvidence] = useState(false);
+  const [apiKeys, setApiKeys] = useState<UserApiKeys>({});
+
+  useEffect(() => {
+    setApiKeys(readUserApiKeysFromStorage());
+  }, []);
 
   useEffect(() => {
     const endpoint = mode === "id" ? `/api/report/${value}` : `/api/report/share/${value}`;
@@ -338,7 +348,10 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
     const initial = await fetch("/api/search", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        query,
+        api_keys: normalizeUserApiKeys(apiKeys),
+      }),
     });
 
     const payload = await readJsonSafe<{
@@ -363,6 +376,7 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
         body: JSON.stringify({
           query,
           selected_gemi: payload.candidates[0].gemi_number,
+          api_keys: normalizeUserApiKeys(apiKeys),
         }),
       });
       const retryPayload = await readJsonSafe<{ search_id?: string; error?: string }>(retry);
@@ -906,7 +920,9 @@ export default function ReportScreen({ mode, value }: { mode: "id" | "token"; va
                 </div>
               </header>
               {report.news.length === 0 ? (
-                <p className="panel-empty">No news enrichment available. Add `SERPAPI_KEY` for live headlines.</p>
+                <p className="panel-empty">
+                  No news enrichment available. Add your SerpAPI key in key settings for live headlines.
+                </p>
               ) : (
                 <ul className="news-list">
                   {report.news.map((news) => (

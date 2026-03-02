@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
+import { hasUserAiKey, normalizeUserApiKeys, type UserApiKeys } from "@/lib/api-keys";
 import {
   buildAdvisorScenario,
   buildAdvisorUserPrompt,
@@ -50,6 +51,7 @@ interface AdvisorRequest {
   reportData?: GEMIReport;
   resolved_flag_ids?: string[];
   scenario_label?: string;
+  api_keys?: unknown;
 }
 
 interface AdvisorCacheEntry {
@@ -79,9 +81,15 @@ function normalizeCompanySlug(value: string | undefined, report: GEMIReport): st
     .replace(/(^-|-$)/g, "");
 }
 
-function buildCacheKey(report: GEMIReport, resolvedFlagIds: string[], companySlug: string): string {
+function buildCacheKey(
+  report: GEMIReport,
+  resolvedFlagIds: string[],
+  companySlug: string,
+  aiProvider: "none" | "openai" | "gemini",
+): string {
   const fingerprint = {
     companySlug,
+    aiProvider,
     gemi: report.company.gemi_number,
     riskScore: report.risk.score,
     confidence: report.risk.confidence,
@@ -137,12 +145,15 @@ function validateMemoShape(memo: string): boolean {
   );
 }
 
-async function generateWithOpenAI(prompt: string): Promise<string | null> {
-  if (!env.openAiApiKey) {
+async function generateWithOpenAI(
+  prompt: string,
+  openaiApiKey?: string,
+): Promise<string | null> {
+  if (!openaiApiKey) {
     return null;
   }
 
-  const client = new OpenAI({ apiKey: env.openAiApiKey, timeout: 25000 });
+  const client = new OpenAI({ apiKey: openaiApiKey, timeout: 25000 });
   const completion = await client.chat.completions.create({
     model: env.openAiModel,
     temperature: 0.2,
@@ -161,8 +172,11 @@ async function generateWithOpenAI(prompt: string): Promise<string | null> {
   return completion.choices[0]?.message?.content?.trim() || null;
 }
 
-async function generateWithGemini(prompt: string): Promise<string | null> {
-  if (!env.geminiApiKey) {
+async function generateWithGemini(
+  prompt: string,
+  geminiApiKey?: string,
+): Promise<string | null> {
+  if (!geminiApiKey) {
     return null;
   }
 
@@ -174,7 +188,7 @@ async function generateWithGemini(prompt: string): Promise<string | null> {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-goog-api-key": env.geminiApiKey,
+      "x-goog-api-key": geminiApiKey,
     },
     body: JSON.stringify({
       contents: [
@@ -208,6 +222,7 @@ async function generateWithGemini(prompt: string): Promise<string | null> {
 async function generateAdvisorMemo(
   report: GEMIReport,
   resolvedFlagIds: string[],
+  apiKeys: UserApiKeys,
 ): Promise<{
   verdict: AdvisorVerdict;
   memo: string;
@@ -218,11 +233,29 @@ async function generateAdvisorMemo(
   const prompt = buildAdvisorUserPrompt(report, resolvedFlagIds);
   const scenario = buildAdvisorScenario(report, resolvedFlagIds);
 
+  if (!hasUserAiKey(apiKeys)) {
+    const normalizedDeterministic = enforceVerdictPolicy(
+      deterministic.memo,
+      scenario.score,
+      deterministic.verdict,
+    );
+
+    return {
+      verdict: normalizedDeterministic.verdict,
+      memo: normalizedDeterministic.memo,
+      generatedBy: "deterministic",
+      metadata: deterministic.metadata,
+    };
+  }
+
   try {
-    const primary = env.geminiApiKey
-      ? await generateWithGemini(prompt)
-      : await generateWithOpenAI(prompt);
-    const candidate = primary || (env.geminiApiKey ? await generateWithOpenAI(prompt) : await generateWithGemini(prompt));
+    const primary = apiKeys.geminiApiKey
+      ? await generateWithGemini(prompt, apiKeys.geminiApiKey)
+      : await generateWithOpenAI(prompt, apiKeys.openaiApiKey);
+    const candidate = primary ||
+      (apiKeys.geminiApiKey
+        ? await generateWithOpenAI(prompt, apiKeys.openaiApiKey)
+        : await generateWithGemini(prompt, apiKeys.geminiApiKey));
 
     if (candidate && validateMemoShape(candidate)) {
       const normalized = enforceVerdictPolicy(candidate, scenario.score, deterministic.verdict);
@@ -376,9 +409,15 @@ export async function POST(request: Request): Promise<Response> {
   const resolvedFlagIds = Array.isArray(payload.resolved_flag_ids)
     ? payload.resolved_flag_ids.map((item) => String(item || "").trim()).filter(Boolean)
     : [];
+  const apiKeys = normalizeUserApiKeys(payload.api_keys);
+  const aiProvider: "none" | "openai" | "gemini" = apiKeys.geminiApiKey
+    ? "gemini"
+    : apiKeys.openaiApiKey
+      ? "openai"
+      : "none";
   const scenario = buildAdvisorScenario(report, resolvedFlagIds);
   const companySlug = normalizeCompanySlug(payload.companySlug, report);
-  const cacheKey = buildCacheKey(report, resolvedFlagIds, companySlug);
+  const cacheKey = buildCacheKey(report, resolvedFlagIds, companySlug, aiProvider);
 
   const cached = await getCachedEntry(cacheKey);
   if (cached) {
@@ -392,7 +431,7 @@ export async function POST(request: Request): Promise<Response> {
     return applyRateLimitHeaders(response, rateState);
   }
 
-  const generated = await generateAdvisorMemo(report, resolvedFlagIds);
+  const generated = await generateAdvisorMemo(report, resolvedFlagIds, apiKeys);
   let verdict = generated.verdict;
   if (scenario.score > 7 && verdict === "PROCEED") {
     verdict = "PROCEED_WITH_CONDITIONS";
