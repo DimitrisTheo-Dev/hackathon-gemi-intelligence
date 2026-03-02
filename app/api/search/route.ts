@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       try {
         const candidateLookup = await lookupGEMICandidates(query, 6);
 
-        if (candidateLookup.requires_selection && candidateLookup.candidates.length > 1) {
+        if (candidateLookup.candidates.length > 1) {
           const response = NextResponse.json({
             requires_selection: true,
             candidates: candidateLookup.candidates,

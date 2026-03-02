@@ -300,6 +300,11 @@ p {
   gap: 10px;
 }
 
+.api-keys-head .candidate-link-btn {
+  margin-top: 0;
+  align-self: center;
+}
+
 .api-keys-title {
   color: #b9c9e9;
   font-size: 12px;
