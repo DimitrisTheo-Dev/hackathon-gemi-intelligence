@@ -107,6 +107,7 @@ export default function LoadingPipeline({ searchId }: { searchId: string }) {
     const seconds = (totalSeconds % 60).toString().padStart(2, "0");
     return `${minutes}:${seconds}`;
   }, [elapsedMs]);
+  const showRefreshHint = elapsedMs >= 3 * 60 * 1000;
 
   return (
     <main className="loading-shell">
@@ -145,6 +146,11 @@ export default function LoadingPipeline({ searchId }: { searchId: string }) {
         </div>
 
         <p className={`pipeline-message ${error ? "error" : ""}`}>{error ?? message}</p>
+        {showRefreshHint ? (
+          <p className="pipeline-hint">
+            If this is still loading after a few minutes, refresh the page.
+          </p>
+        ) : null}
       </section>
     </main>
   );

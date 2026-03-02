@@ -568,6 +568,12 @@ p {
   color: #ff9d9d;
 }
 
+.pipeline-hint {
+  margin-top: 8px;
+  color: #8ea5cc;
+  font-size: 12px;
+}
+
 .report-shell {
   min-height: 100vh;
   position: relative;
