@@ -27,6 +27,7 @@ function stageIndex(stage: PipelineStage | null): number {
 export default function LoadingPipeline({ searchId }: { searchId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const compareWith = searchParams.get("compare_with");
 
   const [elapsedMs, setElapsedMs] = useState(0);
   const [startedAt] = useState(() => Date.now());
@@ -71,7 +72,6 @@ export default function LoadingPipeline({ searchId }: { searchId: string }) {
         setProgress(100);
         eventSource.close();
         setTimeout(() => {
-          const compareWith = searchParams.get("compare_with");
           if (payload.report_id) {
             if (compareWith) {
               router.push(`/compare/${compareWith}/${payload.report_id}`);
@@ -97,7 +97,7 @@ export default function LoadingPipeline({ searchId }: { searchId: string }) {
     return () => {
       eventSource.close();
     };
-  }, [router, searchId, searchParams]);
+  }, [compareWith, router, searchId]);
 
   const elapsedLabel = useMemo(() => {
     const totalSeconds = Math.floor(elapsedMs / 1000);

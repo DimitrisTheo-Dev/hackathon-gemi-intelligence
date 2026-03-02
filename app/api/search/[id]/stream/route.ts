@@ -91,33 +91,51 @@ export async function GET(
       };
 
       const latest = getLatestSearchEvent(id);
+      const terminalFromSearch =
+        search.status === "complete"
+          ? ({
+              stage: "complete",
+              message: search.current_stage || "Report ready",
+              progress: 100,
+              timestamp: new Date().toISOString(),
+              report_id: search.report_id,
+            } satisfies SearchEvent)
+          : search.status === "failed"
+            ? ({
+                stage: "error",
+                message: search.error || search.current_stage || "Pipeline failed.",
+                progress: 100,
+                timestamp: new Date().toISOString(),
+                report_id: search.report_id,
+              } satisfies SearchEvent)
+            : null;
 
-      if (latest) {
-        send(latest);
-      } else {
-        const derived = stageFromSearch(search.status, search.current_stage || "Preparing pipeline...");
-        send({
-          stage: derived.stage,
-          message: search.current_stage || "Preparing pipeline...",
-          progress: derived.progress,
-          timestamp: new Date().toISOString(),
-          report_id: search.report_id,
-        });
-      }
+      const initialEvent =
+        terminalFromSearch ??
+        (latest
+          ? {
+              ...latest,
+              report_id: latest.report_id ?? search.report_id,
+            }
+          : (() => {
+              const derived = stageFromSearch(search.status, search.current_stage || "Preparing pipeline...");
+              return {
+                stage: derived.stage,
+                message: search.current_stage || "Preparing pipeline...",
+                progress: derived.progress,
+                timestamp: new Date().toISOString(),
+                report_id: search.report_id,
+              } satisfies SearchEvent;
+            })());
 
-      if (
-        latest?.stage === "complete" ||
-        latest?.stage === "error" ||
-        search.status === "complete" ||
-        search.status === "failed"
-      ) {
+      send(initialEvent);
+
+      if (initialEvent.stage === "complete" || initialEvent.stage === "error") {
         close();
         return;
       }
 
-      let lastSignature = latest
-        ? `${latest.stage}|${latest.message}|${latest.report_id ?? ""}`
-        : `${search.status}|${search.current_stage}|${search.report_id ?? ""}`;
+      let lastSignature = `${initialEvent.stage}|${initialEvent.message}|${initialEvent.report_id ?? ""}`;
 
       const unsubscribe = subscribeToSearch(id, (event) => {
         lastSignature = `${event.stage}|${event.message}|${event.report_id ?? ""}`;
