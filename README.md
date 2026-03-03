@@ -3,7 +3,8 @@
 <img width="1496" height="737" alt="Screenshot 2026-03-02 at 12 57 02 PM" src="https://github.com/user-attachments/assets/55d305a2-c58d-45a0-8297-c46b810ad014" />
 
 
-**Loom Demo:** https://www.loom.com/share/3d2de5b9e45945e5ab6ed625fa0bd368
+**Loom Demo:**  https://www.loom.com/share/3d2de5b9e45945e5ab6ed625fa0bd368
+
 
 **Small correction: if something has a minus impact its a good thing, so "Annual accounts appear regularly filed without gaps." is something positive. **
 
