@@ -4,6 +4,7 @@
 
 
 **Loom Demo:** https://www.loom.com/share/3d2de5b9e45945e5ab6ed625fa0bd368
+
 **Small correction: if something has a minus impact its a good thing, so "Annual accounts appear regularly filed without gaps." is something positive. **
 
 Built during **Hustle Hours Hackathon (February 28 - March 1, 2026)** in approximately **6 hours**.
